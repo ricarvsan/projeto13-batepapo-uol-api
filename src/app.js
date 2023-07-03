@@ -94,9 +94,21 @@ app.post('/messages', async (req, res) => {
 });
 
 app.get('/messages', async (req, res) => {
+  const { user } = req.headers;
+  const {limit} = req.query;
+  console.log(limit)
+
+  if(!(parseInt(limit) > 0 || limit === undefined)) return res.sendStatus(422);
+
   try {
-    const messages = await db.collection('messages').find().toArray();
-    res.send(messages);
+    const messages = await db.collection('messages').find({ $or: [{type: 'private_message', to: user}, {to: 'Todos'}, {type: 'private_message', from: user}]}).toArray();
+    
+    if(limit) {
+      res.send(messages.slice(-limit));
+    } else {
+      res.send(messages);
+    }    
+    
   } catch (err) {
     res.status(500).send(err.message);
   }
