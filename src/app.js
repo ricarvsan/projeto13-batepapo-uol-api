@@ -114,6 +114,23 @@ app.get('/messages', async (req, res) => {
   }
 });
 
+app.post('/status', async (req, res) => {
+
+  const { user } = req.headers;
+
+  if(!user) return res.sendStatus(404);
+
+  try {
+    const logged = await db.collection('participants').findOne({ name: user });
+    if(!logged) return res.sendStatus(404);
+
+    await db.collection('participants').updateOne({name: user}, {$set: {name: user, lastStatus: Date.now()}})
+    res.sendStatus(201);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // LIGAR APP DO SERVER PARA OUVIR REQUISIÇÕES
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor está rodando na porta ${PORT}`)) 
