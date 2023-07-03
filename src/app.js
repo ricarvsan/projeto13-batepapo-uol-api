@@ -140,7 +140,6 @@ async function removeUser() {
       await db.collection('participants').deleteOne({name: participant.name})
 
       await db.collection('messages').insertOne({from: participant.name, to: 'Todos', text: 'sai da sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
-      console.log('removidos')
     })
   } catch (err) {
     return err.message
