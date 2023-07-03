@@ -96,7 +96,6 @@ app.post('/messages', async (req, res) => {
 app.get('/messages', async (req, res) => {
   const { user } = req.headers;
   const {limit} = req.query;
-  console.log(limit)
 
   if(!(parseInt(limit) > 0 || limit === undefined)) return res.sendStatus(422);
 
@@ -125,11 +124,32 @@ app.post('/status', async (req, res) => {
     if(!logged) return res.sendStatus(404);
 
     await db.collection('participants').updateOne({name: user}, {$set: {name: user, lastStatus: Date.now()}})
-    res.sendStatus(201);
+    res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
+
+async function removeUser() {
+  const dateNow = Date.now();
+
+  try {
+    const users = await db.collection('participants').find({ lastStatus: { $lt: dateNow - 10 * 1000 } }).toArray();
+    
+    users.forEach(async participant => {
+      await db.collection('participants').deleteOne({name: participant.name})
+
+      await db.collection('messages').insertOne({from: participant.name, to: 'Todos', text: 'sai da sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
+      console.log('removidos')
+    })
+  } catch (err) {
+    return err.message
+  }
+}
+
+setInterval(removeUser, 10000);
+
+db.collection('participants').deleteMany();
 
 // LIGAR APP DO SERVER PARA OUVIR REQUISIÇÕES
 const PORT = 5000;
